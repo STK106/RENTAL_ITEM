@@ -1,70 +1,196 @@
-# Getting Started with Create React App
+# FILE 39: README.md
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Chaniya Choli Rental Management System
 
-## Available Scripts
+A complete web application for managing traditional Chaniya Choli rentals with date-based availability tracking.
 
-In the project directory, you can run:
+## Features
 
-### `npm start`
+✅ **User Authentication** - Secure login/registration system
+✅ **Item Management** - Add, edit, delete items with photos
+✅ **Smart Booking System** - Prevents double-booking with date overlap detection
+✅ **Availability Checker** - Real-time availability validation
+✅ **Advanced Filtering** - Search and filter items by price, name, etc.
+✅ **Reports & Analytics** - View booking statistics and trends
+✅ **Export Functionality** - Export reports to CSV/PDF
+✅ **Responsive Design** - Works on desktop and mobile devices
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Tech Stack
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- **Frontend**: React 18
+- **Backend**: Supabase (PostgreSQL + Authentication + Storage)
+- **Styling**: Custom CSS
+- **Libraries**: 
+  - react-router-dom (routing)
+  - jspdf & jspdf-autotable (PDF export)
+  - papaparse (CSV export)
+  - lucide-react (icons)
 
-### `npm test`
+## Setup Instructions
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### 1. Create Supabase Project
 
-### `npm run build`
+1. Go to [supabase.com](https://supabase.com) and create an account
+2. Create a new project
+3. Note your project URL and anon key from Project Settings > API
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 2. Setup Database
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Run the following SQL in your Supabase SQL Editor:
+```sql
+-- Create items table
+CREATE TABLE items (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  item_name VARCHAR(255) NOT NULL,
+  description TEXT,
+  rent_price DECIMAL(10, 2) NOT NULL,
+  rent_type VARCHAR(20) DEFAULT 'per_day',
+  photo_url TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+-- Create bookings table
+CREATE TABLE bookings (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  item_id UUID REFERENCES items(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  customer_name VARCHAR(255) NOT NULL,
+  customer_mobile VARCHAR(15) NOT NULL,
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  rent_price DECIMAL(10, 2) NOT NULL,
+  status VARCHAR(20) DEFAULT 'active',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  CONSTRAINT valid_date_range CHECK (end_date >= start_date)
+);
 
-### `npm run eject`
+-- Enable Row Level Security
+ALTER TABLE items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+-- Create policies for items
+CREATE POLICY "Users can view own items" ON items
+  FOR SELECT USING (auth.uid() = user_id);
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+CREATE POLICY "Users can insert own items" ON items
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+CREATE POLICY "Users can update own items" ON items
+  FOR UPDATE USING (auth.uid() = user_id);
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+CREATE POLICY "Users can delete own items" ON items
+  FOR DELETE USING (auth.uid() = user_id);
 
-## Learn More
+-- Create policies for bookings
+CREATE POLICY "Users can view own bookings" ON bookings
+  FOR SELECT USING (auth.uid() = user_id);
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+CREATE POLICY "Users can insert own bookings" ON bookings
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+CREATE POLICY "Users can update own bookings" ON bookings
+  FOR UPDATE USING (auth.uid() = user_id);
 
-### Code Splitting
+CREATE POLICY "Users can delete own bookings" ON bookings
+  FOR DELETE USING (auth.uid() = user_id);
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+-- Create index for faster queries
+CREATE INDEX idx_bookings_dates ON bookings(item_id, start_date, end_date);
+```
 
-### Analyzing the Bundle Size
+### 3. Setup Storage Bucket
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+In Supabase Dashboard:
+1. Go to Storage
+2. Create a new bucket named `item-photos`
+3. Make it public
+4. Set up policies:
+```sql
+-- Storage policies
+CREATE POLICY "Users can upload item photos" ON storage.objects
+  FOR INSERT WITH CHECK (bucket_id = 'item-photos' AND auth.role() = 'authenticated');
 
-### Making a Progressive Web App
+CREATE POLICY "Public can view item photos" ON storage.objects
+  FOR SELECT USING (bucket_id = 'item-photos');
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+### 4. Install and Run Project
+```bash
+# Clone or create the project
+npx create-react-app chaniya-choli-rental
+cd chaniya-choli-rental
 
-### Advanced Configuration
+# Install dependencies
+npm install @supabase/supabase-js react-router-dom jspdf jspdf-autotable papaparse lucide-react
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+# Create .env file in root directory
+# Add your Supabase credentials:
+REACT_APP_SUPABASE_URL=your_supabase_url
+REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key
 
-### Deployment
+# Copy all the provided files to their respective locations
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+# Start the development server
+npm start
+```
 
-### `npm run build` fails to minify
+The app will open at `http://localhost:3000`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## Usage
+
+1. **Register** - Create a new seller account
+2. **Add Items** - Add your Chaniya Choli items with photos and pricing
+3. **Create Bookings** - Record customer bookings with automatic availability checking
+4. **View Reports** - Track your business performance and export data
+
+## Project Structure
+```
+chaniya-choli-rental/
+├── public/
+│   └── index.html
+├── src/
+│   ├── components/
+│   │   ├── Auth/
+│   │   ├── Dashboard/
+│   │   ├── Booking/
+│   │   ├── Reports/
+│   │   └── Layout/
+│   ├── services/
+│   ├── utils/
+│   ├── hooks/
+│   ├── context/
+│   ├── App.jsx
+│   └── index.js
+├── .env
+└── package.json
+```
+
+## Key Features Explained
+
+### Double-Booking Prevention
+The system automatically checks for date overlaps when creating bookings:
+- Compares start and end dates with existing bookings
+- Shows conflict details if dates overlap
+- Prevents booking creation if conflict exists
+
+### Date Validation
+- End date must be >= start date
+- Cannot book past dates
+- Automatic price calculation based on duration
+
+### Export Functionality
+- **CSV Export**: Download booking data in Excel-compatible format
+- **PDF Export**: Generate professional reports with tables and summaries
+
+## Support
+
+For issues or questions, please check:
+- Supabase documentation: https://supabase.com/docs
+- React documentation: https://react.dev
+
+## License
+
+MIT License - Feel free to use this project for personal or commercial purposes.

@@ -278,3 +278,70 @@
     width: 100%;
   }
 }
+
+/* ADD THESE NEW STYLES TO THE END OF Booking.css */
+
+/* Clear search button */
+.clear-search {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 5px;
+  transition: color 0.3s;
+}
+
+.clear-search:hover {
+  color: #333;
+}
+
+/* Search results info */
+.search-results-info {
+  background: #e3f2fd;
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border-left: 4px solid #1976d2;
+}
+
+.search-results-info p {
+  margin: 0;
+  color: #1565c0;
+  font-size: 14px;
+}
+
+.search-results-info strong {
+  font-weight: 700;
+  color: #0d47a1;
+}
+
+/* Enhanced search box for bookings */
+.bookings-container .search-box {
+  position: relative;
+  flex: 1;
+  max-width: 600px;
+}
+
+.bookings-container .search-box input {
+  width: 100%;
+  padding-right: 40px; /* Space for clear button */
+}
+
+/* Highlight search matches (optional enhancement) */
+.booking-card.highlight {
+  border: 2px solid #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+/* Mobile responsive updates */
+@media (max-width: 768px) {
+  .search-results-info {
+    font-size: 13px;
+    padding: 10px 15px;
+  }
+
+  .bookings-container .search-box {
+    max-width: 100%;
+  }
+}

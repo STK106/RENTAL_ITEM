@@ -77,7 +77,7 @@ const ItemList = ({ items, onEdit, onDelete, onBook }) => {
               key={item.id}
               item={item}
               onEdit={onEdit}
-              onDelete={onDelete}
+              onDelete={onDelete}  // 🔥 Now passes entire item object
               onBook={onBook}
             />
           ))}

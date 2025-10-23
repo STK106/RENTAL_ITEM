@@ -32,7 +32,8 @@ const ItemCard = ({ item, onEdit, onDelete, onBook }) => {
           <button className="btn-icon btn-edit" onClick={() => onEdit(item)} title="Edit Item">
             <Edit size={18} />
           </button>
-          <button className="btn-icon btn-delete" onClick={() => onDelete(item.id)} title="Delete Item">
+          {/* 🔥 CHANGED: Pass entire item object instead of just ID */}
+          <button className="btn-icon btn-delete" onClick={() => onDelete(item)} title="Delete Item">
             <Trash2 size={18} />
           </button>
         </div>

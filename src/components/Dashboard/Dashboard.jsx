@@ -7,6 +7,7 @@ import { deleteItem } from '../../services/itemService';
 import ItemList from './ItemList';
 import ItemForm from './ItemForm';
 import BookingForm from '../Booking/BookingForm';
+import ConfirmModal from '../common/ConfirmModal'; // 🔥 NEW IMPORT
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -15,6 +16,13 @@ const Dashboard = () => {
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedItemForBooking, setSelectedItemForBooking] = useState(null);
+  
+  // 🔥 NEW: Confirmation modal state
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    itemId: null,
+    itemName: ''
+  });
 
   const handleAddItem = () => {
     setSelectedItem(null);
@@ -26,15 +34,29 @@ const Dashboard = () => {
     setShowItemForm(true);
   };
 
-  const handleDeleteItem = async (itemId) => {
-    if (window.confirm('Are you sure you want to delete this item?')) {
-      const { error } = await deleteItem(itemId);
-      if (!error) {
-        refreshItems();
-      } else {
-        alert('Error deleting item: ' + error);
-      }
+  // 🔥 NEW: Open confirmation modal
+  const handleDeleteItem = (item) => {
+    setConfirmModal({
+      isOpen: true,
+      itemId: item.id,
+      itemName: item.item_name
+    });
+  };
+
+  // 🔥 NEW: Confirm deletion
+  const confirmDeleteItem = async () => {
+    const { error } = await deleteItem(confirmModal.itemId);
+    if (!error) {
+      refreshItems();
+    } else {
+      alert('Error deleting item: ' + error);
     }
+    setConfirmModal({ isOpen: false, itemId: null, itemName: '' });
+  };
+
+  // 🔥 NEW: Cancel deletion
+  const cancelDelete = () => {
+    setConfirmModal({ isOpen: false, itemId: null, itemName: '' });
   };
 
   const handleBookItem = (item) => {
@@ -81,7 +103,7 @@ const Dashboard = () => {
       <ItemList
         items={items}
         onEdit={handleEditItem}
-        onDelete={handleDeleteItem}
+        onDelete={handleDeleteItem}  // Pass item object instead of just ID
         onBook={handleBookItem}
       />
 
@@ -103,6 +125,18 @@ const Dashboard = () => {
           }}
         />
       )}
+
+      {/* 🔥 NEW: Custom Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={cancelDelete}
+        onConfirm={confirmDeleteItem}
+        title="Delete Item"
+        message={`Are you sure you want to delete "${confirmModal.itemName}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 };

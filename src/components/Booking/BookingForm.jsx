@@ -15,13 +15,15 @@ const BookingForm = ({ item, booking, onClose, onSuccess }) => {
     customer_mobile: '',
     start_date: '',
     end_date: '',
-    rent_price: item ? item.rent_price : ''
+    rent_price: item ? item.rent_price : '',
+    discount: '' // 🔥 NEW: Discount field
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [availability, setAvailability] = useState(null);
   const [conflictingBookings, setConflictingBookings] = useState([]);
   const [totalPrice, setTotalPrice] = useState(0);
+  const [discountedPrice, setDiscountedPrice] = useState(0); // 🔥 NEW: Final price after discount
 
   useEffect(() => {
     if (booking) {
@@ -30,7 +32,8 @@ const BookingForm = ({ item, booking, onClose, onSuccess }) => {
         customer_mobile: booking.customer_mobile || '',
         start_date: booking.start_date || '',
         end_date: booking.end_date || '',
-        rent_price: booking.rent_price || ''
+        rent_price: booking.rent_price || '',
+        discount: booking.discount || '' // 🔥 NEW: Load discount if editing
       });
     }
   }, [booking]);
@@ -42,17 +45,33 @@ const BookingForm = ({ item, booking, onClose, onSuccess }) => {
     }
   }, [formData.start_date, formData.end_date]);
 
+  // 🔥 NEW: Recalculate when discount changes
+  useEffect(() => {
+    calculateDiscountedPrice();
+  }, [totalPrice, formData.discount]);
+
   const calculateTotalPrice = () => {
     if (!formData.start_date || !formData.end_date) return;
 
     if (item.rent_type === 'per_day') {
       const days = calculateDays(formData.start_date, formData.end_date);
       setTotalPrice(days * item.rent_price);
-      setFormData(prev => ({ ...prev, rent_price: days * item.rent_price }));
     } else {
       setTotalPrice(item.rent_price);
-      setFormData(prev => ({ ...prev, rent_price: item.rent_price }));
     }
+  };
+
+  // 🔥 NEW: Calculate final price after discount
+  const calculateDiscountedPrice = () => {
+    const discount = parseFloat(formData.discount) || 0;
+    
+    if (discount < 0) {
+      setDiscountedPrice(totalPrice);
+      return;
+    }
+
+    const finalPrice = totalPrice - discount;
+    setDiscountedPrice(finalPrice > 0 ? finalPrice : 0);
   };
 
   const checkItemAvailability = async () => {
@@ -96,13 +115,27 @@ const BookingForm = ({ item, booking, onClose, onSuccess }) => {
       return;
     }
 
+    // 🔥 NEW: Validate discount
+    const discount = parseFloat(formData.discount) || 0;
+    if (discount < 0) {
+      setError('Discount cannot be negative');
+      return;
+    }
+
+    if (discount > totalPrice) {
+      setError('Discount cannot be greater than total price');
+      return;
+    }
+
     setLoading(true);
 
     const bookingData = {
       ...formData,
       item_id: item.id,
       user_id: user.id,
-      status: 'active'
+      status: 'active',
+      rent_price: discountedPrice, // 🔥 NEW: Save final price after discount
+      discount: discount // 🔥 NEW: Save discount amount
     };
 
     const { data, error: bookingError } = await createBooking(bookingData);
@@ -187,6 +220,25 @@ const BookingForm = ({ item, booking, onClose, onSuccess }) => {
             </div>
           </div>
 
+          {/* 🔥 NEW: Discount Field */}
+          <div className="form-group">
+            <label htmlFor="discount">Discount (₹) <span className="optional-label">(Optional)</span></label>
+            <input
+              type="number"
+              id="discount"
+              name="discount"
+              value={formData.discount}
+              onChange={handleChange}
+              placeholder="Enter discount amount"
+              min="0"
+              max={totalPrice}
+              step="0.01"
+            />
+            <small className="field-hint">
+              Enter discount amount to reduce the total price
+            </small>
+          </div>
+
           {formData.start_date && formData.end_date && item && (
             <div className="booking-summary">
               <div className="summary-row">
@@ -197,9 +249,22 @@ const BookingForm = ({ item, booking, onClose, onSuccess }) => {
                 <span>Price per {item.rent_type === 'per_day' ? 'day' : 'booking'}:</span>
                 <strong>₹{item.rent_price}</strong>
               </div>
-              <div className="summary-row total">
-                <span>Total Price:</span>
+              <div className="summary-row">
+                <span>Subtotal:</span>
                 <strong>₹{totalPrice}</strong>
+              </div>
+              
+              {/* 🔥 NEW: Show discount row if discount is entered */}
+              {formData.discount && parseFloat(formData.discount) > 0 && (
+                <div className="summary-row discount-row">
+                  <span>Discount:</span>
+                  <strong className="discount-amount">- ₹{parseFloat(formData.discount).toFixed(2)}</strong>
+                </div>
+              )}
+              
+              <div className="summary-row total">
+                <span>Final Price:</span>
+                <strong>₹{discountedPrice.toFixed(2)}</strong>
               </div>
             </div>
           )}

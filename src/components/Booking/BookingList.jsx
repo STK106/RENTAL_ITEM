@@ -241,6 +241,15 @@ const BookingList = () => {
                     {formatDisplayDate(booking.start_date)} - {formatDisplayDate(booking.end_date)}
                   </span>
                 </div>
+                
+                {/* 🔥 NEW: Show discount if applied */}
+                {booking.discount && booking.discount > 0 && (
+                  <div className="detail-row discount-info">
+                    <span>Discount:</span>
+                    <span className="discount-value">- ₹{booking.discount}</span>
+                  </div>
+                )}
+                
                 <div className="detail-row price">
                   <span>Total:</span>
                   <strong>₹{booking.rent_price}</strong>

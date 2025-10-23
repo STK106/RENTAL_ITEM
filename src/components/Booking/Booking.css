@@ -345,3 +345,71 @@
     max-width: 100%;
   }
 }
+
+/* ADD THESE NEW STYLES TO THE END OF Booking.css */
+
+/* Optional label styling */
+.optional-label {
+  font-weight: 400;
+  color: #999;
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* Field hint text */
+.field-hint {
+  display: block;
+  margin-top: 5px;
+  color: #999;
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* Discount row in summary */
+.discount-row {
+  color: #4caf50;
+  border-top: 1px dashed #ddd;
+  padding-top: 8px;
+  margin-top: 5px;
+}
+
+.discount-amount {
+  color: #4caf50 !important;
+  font-weight: 700;
+}
+
+/* Enhanced summary styling */
+.booking-summary .summary-row.total {
+  border-top: 2px solid #667eea;
+  margin-top: 10px;
+  padding-top: 12px;
+  font-size: 18px;
+  color: #333;
+}
+
+.booking-summary .summary-row.total strong {
+  color: #667eea;
+  font-size: 22px;
+}
+
+/* Discount input validation */
+input[name="discount"]:invalid {
+  border-color: #f44336;
+}
+
+input[name="discount"]:valid {
+  border-color: #4caf50;
+}
+
+/* Discount info in booking card */
+.discount-info {
+  background: #e8f5e9;
+  padding: 5px 10px;
+  border-radius: 4px;
+  margin: 5px 0;
+}
+
+.discount-value {
+  color: #4caf50;
+  font-weight: 600;
+}

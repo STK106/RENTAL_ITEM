@@ -49,11 +49,13 @@ export const createBooking = async (bookingData) => {
       };
     }
 
+    // 🔥 This will now include discount field automatically
     const { data, error } = await supabase
       .from('bookings')
-      .insert([bookingData])
+      .insert([bookingData])  // Includes discount
       .select()
       .single();
+
 
     if (error) throw error;
     return { data, error: null, conflictingBookings: [] };

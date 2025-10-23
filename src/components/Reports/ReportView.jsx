@@ -188,7 +188,7 @@ const ReportView = () => {
                   <th>Mobile</th>
                   <th>Start Date</th>
                   <th>End Date</th>
-                  <th>Rent Price</th>
+                  <th>Rent Price</th>  {/* Already shows final price */}
                   <th>Status</th>
                 </tr>
               </thead>
@@ -200,7 +200,23 @@ const ReportView = () => {
                     <td>{booking.customer_mobile}</td>
                     <td>{formatDisplayDate(booking.start_date)}</td>
                     <td>{formatDisplayDate(booking.end_date)}</td>
-                    <td>₹{booking.rent_price}</td>
+                    
+                    {/* 🔥 NEW: Show discount in reports */}
+                    <td>
+                      {booking.discount && booking.discount > 0 ? (
+                        <span>
+                          <span style={{ textDecoration: 'line-through', color: '#999', fontSize: '12px' }}>
+                            ₹{(parseFloat(booking.rent_price) + parseFloat(booking.discount)).toFixed(2)}
+                          </span>
+                          <br />
+                          ₹{booking.rent_price}
+                          <span style={{ color: '#4caf50', fontSize: '12px' }}> (-₹{booking.discount})</span>
+                        </span>
+                      ) : (
+                        `₹${booking.rent_price}`
+                      )}
+                    </td>
+                    
                     <td>
                       <span className={`status-badge ${booking.status}`}>
                         {booking.status}

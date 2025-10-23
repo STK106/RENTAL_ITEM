@@ -13,6 +13,7 @@ export const exportToCSV = (bookings) => {
     'Mobile': booking.customer_mobile,
     'Start Date': formatDisplayDate(booking.start_date),
     'End Date': formatDisplayDate(booking.end_date),
+    'Discount': booking.discount ? `₹${booking.discount}` : '₹0', // 🔥 NEW
     'Rent Price': `₹${booking.rent_price}`,
     'Status': booking.status,
     'Created At': formatDisplayDate(booking.created_at)
@@ -43,12 +44,14 @@ export const exportToPDF = (bookings) => {
   doc.text(`Generated on: ${formatDisplayDate(new Date())}`, 14, 30);
   
   // Prepare table data
+  // 🔥 NEW: Include discount in PDF table
   const tableData = bookings.map(booking => [
     booking.items?.item_name || 'N/A',
     booking.customer_name,
     booking.customer_mobile,
     formatDisplayDate(booking.start_date),
     formatDisplayDate(booking.end_date),
+    booking.discount ? `₹${booking.discount}` : '-', // 🔥 NEW
     `₹${booking.rent_price}`,
     booking.status.toUpperCase()
   ]);
@@ -56,7 +59,7 @@ export const exportToPDF = (bookings) => {
   // Add table
   doc.autoTable({
     startY: 40,
-    head: [['Item', 'Customer', 'Mobile', 'Start Date', 'End Date', 'Price', 'Status']],
+    head: [['Item', 'Customer', 'Mobile', 'Start', 'End', 'Discount', 'Price', 'Status']], // 🔥 NEW column
     body: tableData,
     theme: 'grid',
     headStyles: {
@@ -65,7 +68,7 @@ export const exportToPDF = (bookings) => {
       fontStyle: 'bold'
     },
     styles: {
-      fontSize: 9,
+      fontSize: 8, // 🔥 Reduced to fit discount column
       cellPadding: 5
     },
     alternateRowStyles: {
@@ -79,7 +82,10 @@ export const exportToPDF = (bookings) => {
   doc.text(`Total Bookings: ${bookings.length}`, 14, finalY + 15);
   
   const totalRevenue = bookings.reduce((sum, b) => sum + parseFloat(b.rent_price), 0);
+  const totalDiscount = bookings.reduce((sum, b) => sum + parseFloat(b.discount || 0), 0); // 🔥 NEW
+  
   doc.text(`Total Revenue: ₹${totalRevenue.toFixed(2)}`, 14, finalY + 25);
+  doc.text(`Total Discounts: ₹${totalDiscount.toFixed(2)}`, 14, finalY + 35); // 🔥 NEW
   
   // Save PDF
   doc.save(`bookings_report_${new Date().toISOString().split('T')[0]}.pdf`);
